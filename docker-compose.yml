@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # Streamlit Application
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./Data:/app/Data
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+    command: streamlit run src/streamlit/app.py --server.port=8501 --server.address=0.0.0.0
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # Dash Application
+  dash:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8050:8050"
+    volumes:
+      - ./Data:/app/Data
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+    command: python src/dash/app.py
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # REST API (Flask)
+  rest-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./Data:/app/Data
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - FLASK_ENV=production
+    command: python src/api/rest_api.py
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # FastAPI
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./Data:/app/Data
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+    command: uvicorn src.api.fast_api:app --host 0.0.0.0 --port 8000
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - streamlit
+      - dash
+      - rest-api
+      - fastapi
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  data:
+  logs: 

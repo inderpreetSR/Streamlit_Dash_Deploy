@@ -1,0 +1,7 @@
+Project Service Links
+====================
+Streamlit: http://localhost:8501
+Dash: http://localhost:8050
+REST API: http://localhost:5000
+FastAPI: http://localhost:8000
+FastAPI Docs: http://localhost:8000/docs
